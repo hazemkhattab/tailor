@@ -1,104 +1,118 @@
-// ==================== animation ===========================
+// ==================== Preloader ===========================
 
-var preloader = document.getElementsByClassName("preloader")[0];
-var head = document.querySelector(".hero_content h1");
-window.onload = function () {
-  setTimeout(function () {
-    preloader.style.transition = "opacity 300ms";
-    preloader.style.opacity = 0;
-    setTimeout(function () {
+const preloader = document.querySelector(".preloader");
+
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    preloader.style.opacity = "0";
+    preloader.style.transition = "opacity 0.5s ease";
+    setTimeout(() => {
       preloader.style.display = "none";
-    }, 1000);
+    }, 500);
   }, 1000);
+});
+
+// ==================== Fixed Header ===========================
+
+const header = document.querySelector(".header");
+const hero = document.querySelector(".hero");
+
+const headerObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) {
+        header.classList.add("fixed-bar");
+      } else {
+        header.classList.remove("fixed-bar");
+      }
+    });
+  },
+  {
+    rootMargin: "-100px 0px 0px 0px",
+  }
+);
+
+if (hero) {
+  headerObserver.observe(hero);
+}
+
+// ==================== Scroll Animations ===========================
+
+const observerOptions = {
+  threshold: 0.2,
+  rootMargin: "0px 0px -50px 0px",
 };
 
-// ===================================
+const observer = new IntersectionObserver((entries, observer) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.style.animation = `fadeInUp 1s ease forwards ${entry.target.dataset.delay || "0s"}`;
+      observer.unobserve(entry.target);
+    }
+  });
+}, observerOptions);
 
-var header = document.getElementsByClassName("header")[0];
+const offers = document.querySelectorAll(".offer");
+offers.forEach((offer, index) => {
+  offer.dataset.delay = `${index * 0.2}s`;
+  observer.observe(offer);
+});
 
-var offers = document.getElementsByClassName("offer");
+const services = document.querySelectorAll(".service-item");
+services.forEach((service, index) => {
+  service.dataset.delay = `${index * 0.1}s`;
+  observer.observe(service);
+});
 
-var services = document.getElementsByClassName("service-item");
-
-window.onscroll = function () {
-  if (scrollY > 440) {
-    header.classList.add("fixed-bar");
-    offers[0].style.animation = "fadeInUp 1.5s forwards";
-    offers[1].style.animation = "fadeInUp 1.5s .4s forwards";
-    offers[2].style.animation = "fadeInUp 1.5s .8s forwards";
-  } else {
-    header.classList.remove("fixed-bar");
-  }
-  if (scrollY > 2000) {
-    services[0].style.animation = "fadeInUp 1s forwards";
-    services[1].style.animation = "fadeInUp 1s .2s forwards";
-    services[2].style.animation = "fadeInUp 1s .4s forwards";
-    services[3].style.animation = "fadeInUp 1s .6s forwards";
-  }
-};
-
-// =====================================slider========================================
+// ==================== Testimonial Slider ===========================
 
 const testimonials = document.querySelectorAll(".testimonial-content");
 const prevArrow = document.querySelector(".testimonial-navigation .prev");
 const nextArrow = document.querySelector(".testimonial-navigation .next");
 let currentIndex = 0;
-let autoSlide;
+let autoSlideInterval;
 
 function showTestimonial(index) {
   testimonials.forEach((t, i) => {
+    t.style.display = i === index ? "block" : "none";
     if (i === index) {
-      // Prepare next slide
-      t.style.display = "block";
-      t.style.animation = "slideInRight 0.7s ease forwards";
-    } else {
-      t.style.display = "none";
+      t.style.animation = "slideInRight 0.5s ease forwards";
     }
   });
 }
 
-function goToSlide(newIndex) {
-  const current = testimonials[currentIndex];
-  const next = testimonials[newIndex];
-
-  // Fade out current slide
-  current.style.animation = "fadeOutLeft 0.3s linear forwards";
-
-  // After fade-out finishes, show next slide
-  setTimeout(() => {
-    current.style.display = "none";
-    next.style.display = "block";
-    next.style.animation = "slideInRight .5s linear forwards";
-    currentIndex = newIndex;
-  }, 500);
-}
-
 function nextSlide() {
-  const newIndex = (currentIndex + 1) % testimonials.length;
-  goToSlide(newIndex);
+  currentIndex = (currentIndex + 1) % testimonials.length;
+  showTestimonial(currentIndex);
 }
 
 function prevSlide() {
-  const newIndex =
-    (currentIndex - 1 + testimonials.length) % testimonials.length;
-  goToSlide(newIndex);
+  currentIndex = (currentIndex - 1 + testimonials.length) % testimonials.length;
+  showTestimonial(currentIndex);
 }
 
-// Auto-slide every 5s
-autoSlide = setInterval(nextSlide, 5000);
+function startAutoSlide() {
+  autoSlideInterval = setInterval(nextSlide, 5000);
+}
 
-// Controls
-nextArrow.addEventListener("click", () => {
-  clearInterval(autoSlide);
-  nextSlide();
-  autoSlide = setInterval(nextSlide, 5000);
-});
+function stopAutoSlide() {
+  clearInterval(autoSlideInterval);
+}
 
-prevArrow.addEventListener("click", () => {
-  clearInterval(autoSlide);
-  prevSlide();
-  autoSlide = setInterval(nextSlide, 5000);
-});
+if (nextArrow && prevArrow) {
+  nextArrow.addEventListener("click", () => {
+    stopAutoSlide();
+    nextSlide();
+    startAutoSlide();
+  });
 
-// Show first slide
+  prevArrow.addEventListener("click", () => {
+    stopAutoSlide();
+    prevSlide();
+    startAutoSlide();
+  });
+}
+
+// Initialize
 showTestimonial(currentIndex);
+startAutoSlide();
